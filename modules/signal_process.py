@@ -102,6 +102,7 @@ def dsp32_mfcc_feature_folder_process(input_path, output_path, output_file):
         dsp32.tofile(os.path.join(output_path, base_name))
     dsp32 = np.asarray(result, dtype=np.float32)
     dsp32.tofile(output_file)
+    print(dsp32.shape)
 
 
 def dsp32_mfcc_feature_signal_process(input_dir, output_dir, groups):
@@ -110,6 +111,32 @@ def dsp32_mfcc_feature_signal_process(input_dir, output_dir, groups):
         output_path = os.path.join(output_dir, group)
         output_file = os.path.join(output_dir, group + ".bin")
         dsp32_mfcc_feature_folder_process(input_path, output_path, output_file)
+
+
+def load_dsp32_data(dsp32_dir, groups, n_mfcc=49, n_coef=40):
+    result = {}
+    for group in groups:
+        dsp32_file = os.path.join(dsp32_dir, group + ".bin")
+        dsp32_data = np.fromfile(dsp32_file, dtype=np.float32)
+        count = dsp32_data.size // n_mfcc // n_coef
+        np_data = dsp32_data.reshape((count, n_mfcc, n_coef))
+        result[group] = np_data
+    return result
+
+
+def load_dsp32_distance(dsp32, group, normal_center):
+    scores = []
+    for sample in dsp32:
+        dist = np.linalg.norm(sample - normal_center)
+        scores.append(dist)
+    scores = np.asarray(scores)
+    print("================", group, "================")
+    print("    mean:", scores.mean())
+    print("    std :", scores.std())
+    print("    max :", scores.max())
+    print("    P95 :", np.percentile(scores, 95))
+    print("    P90 :", np.percentile(scores, 90))
+    return scores
 
 
 if __name__ == "__main__":
