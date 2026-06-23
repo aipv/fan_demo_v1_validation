@@ -4,86 +4,73 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score,confusion_matrix,classification_report
 
-DSP32_DIR="../dataset/dsp32"
-N_MFCC=49
-N_COEF=40
+def load_dsp32_group(dsp32_path, group, n_mfcc=49, n_coef=40):
+    dsp32_file = os.path.join(dsp32_path, group + ".bin")
+    dsp32_data = np.fromfile(dsp32_file, dtype=np.float32)
+    count = dsp32_data.size // n_mfcc // n_coef
+    result = dsp32_data.reshape((count, n_mfcc, n_coef))
+    return result
 
-def load_group(path, name):
-    data=np.fromfile(os.path.join(path,name+".bin"),dtype=np.float32)
-    count=data.size//N_MFCC//N_COEF
-    return data.reshape(count,N_MFCC,N_COEF)
+def load_dsp32_groups(dsp32_path, groups):
+    result = np.concatenate(
+        [load_dsp32_group(dsp32_path, group) for group in groups],
+        axis=0
+    )
+    return result
 
-def load_dataset(path):
-    normal=load_group(path,"normal")
-
-    fault=np.concatenate([
-        load_group(path,"abnormal"),
-        load_group(path,"d1"),
-        load_group(path,"d2")
-    ],axis=0)
-
-    x=np.concatenate([normal,fault],axis=0)
-
-    y=np.concatenate([
-        np.zeros(len(normal),dtype=np.int32),
-        np.ones(len(fault),dtype=np.int32)
+def load_train_dataset(dsp32_path, pos_group, neg_group):
+    pos_data = load_dsp32_groups(dsp32_path, pos_group)
+    neg_data = load_dsp32_groups(dsp32_path, neg_group)
+    x = np.concatenate([pos_data, neg_data], axis=0)
+    y = np.concatenate([
+        np.zeros(len(pos_data), dtype=np.int32),
+        np.ones(len(neg_data), dtype=np.int32)
     ])
+    x = x.reshape(len(x),-1)
+    return x, y
 
-    return x,y
+def split_train_dataset(x, y):
+    x_train, x_test, y_train, y_test = train_test_split(x,y,
+        test_size=0.2, random_state=42, stratify=y)
+    return x_train, x_test, y_train, y_test
 
-def train():
-    x,y=load_dataset(DSP32_DIR)
-    x=x.reshape(len(x),-1)
-
-    print("x shape =",x.shape)
-    print("y shape =",y.shape)
-
-    x_train,x_test,y_train,y_test=train_test_split(
-        x,y,
-        test_size=0.2,
-        random_state=42,
-        stratify=y
-    )
-
-    model=LogisticRegression(
-        max_iter=5000,
-        n_jobs=-1
-    )
-
-    model.fit(x_train,y_train)
-
-    y_pred=model.predict(x_test)
-
-    print("\nAccuracy =",accuracy_score(y_test,y_pred))
-
-    print("\nConfusion Matrix")
-    print(confusion_matrix(y_test,y_pred))
-
-    print("\nClassification Report")
-    print(classification_report(y_test,y_pred))
-
-    prob=model.predict_proba(x_test)
-
-    print("\nNormal Prob Mean =",prob[y_test==0][:,0].mean())
-    print("Fault  Prob Mean =",prob[y_test==1][:,1].mean())
-
+def model_train_dataset(x, y):
+    model=LogisticRegression(max_iter=5000, n_jobs=-1)
+    model.fit(x, y)
     return model
 
+def model_validate_dataset(model, x, y):
+    y_pred = model.predict(x)
+    prob = model.predict_proba(x)
+    print("\nAccuracy =",accuracy_score(y, y_pred))
+    print("\nConfusion Matrix")
+    print(confusion_matrix(y, y_pred))
+    print("\nClassification Report")
+    print(classification_report(y, y_pred))
+    print("\nNormal Prob Mean =",prob[y==0][:,0].mean())
+    print("Fault  Prob Mean =",prob[y==1][:,1].mean())
 
-def eval_group(model,dsp32_dir,name):
-    data=load_group(dsp32_dir,name)
+def model_train(dataset, pos_group, neg_group):
+    x, y = load_train_dataset(dataset, pos_group, neg_group)
+    x_train, x_test, y_train, y_test = split_train_dataset(x, y)
+    model = model_train_dataset(x_train, y_train)
+    model_validate_dataset(model, x_test, y_test)
+    return model
+
+def eval_group(model, dsp32_dir, group):
+    data=load_dsp32_group(dsp32_dir,group)
     x=data.reshape(len(data),-1)
     p=model.predict_proba(x)[:,1]
-    print(name,
-          "mean=",p.mean(),
-          "std=",p.std(),
-          "max=",p.max())
+    print(group, "mean=",p.mean(), "std=",p.std(), "max=",p.max())
+
+def eval_groups(model, dsp32_dir, groups):
+    for group in groups:
+        eval_group(model, dsp32_dir, group)
 
 if __name__=="__main__":
-    model = train()
-    eval_group(model,DSP32_DIR,"normal")
-    eval_group(model,DSP32_DIR,"abnormal")
-    eval_group(model,DSP32_DIR,"d1")
-    eval_group(model,DSP32_DIR,"d2")
-    eval_group(model,DSP32_DIR,"d3")
-    eval_group(model,DSP32_DIR,"d4")
+    path="../dataset/dsp32"
+    pos_group = ['normal']
+    neg_group = ['abnormal', 'd1', 'd2']
+    val_group = ['normal', 'abnormal', 'd1', 'd2', 'd3', 'd4']
+    model = model_train(path, pos_group, neg_group)
+    eval_groups(model, path, val_group)
