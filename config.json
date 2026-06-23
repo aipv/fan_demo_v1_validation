@@ -12,6 +12,8 @@
     },
     "train":
     {
+        "model_py": "dataset/model/model.py",
+        "model_h": "dataset/model/model.h",
         "pos_group" : ["normal"],
         "neg_group" : ["abnormal", "d1", "d2"]
     }
