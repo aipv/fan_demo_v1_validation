@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "../dataset/model/model.h"
+#include "../../dataset/model/model.h"
 
 #define N_MFCC 49
 #define N_COEF 40
@@ -106,8 +106,8 @@ int main() {
         char dsp32_path[256];
         char predict_path[256];
 
-        sprintf(dsp32_path, "../dataset/dsp32/%s.bin", group);
-        sprintf(predict_path, "../dataset/predict/%s.bin", group);
+        sprintf(dsp32_path, "../../dataset/dsp32/%s.bin", group);
+        sprintf(predict_path, "../../dataset/predict/%s.bin", group);
 
         Dsp32Data dsp32 = load_dsp32(dsp32_path);
         PredictData py_predict = load_predict(predict_path);

@@ -1,6 +1,6 @@
 import os
 import sys
-sys.path.insert(0, 'dataset/model')
+sys.path.insert(0, '../dataset/model')
 import numpy as np
 from model import predict_batch
 from modules.train_process import load_dsp32_group, load_train_dataset, split_train_dataset
@@ -9,7 +9,7 @@ from sklearn.linear_model import LogisticRegression
 
 def load_sklearn_model():
     """Retrain and return sklearn model"""
-    dsp32_path = "dataset/dsp32"
+    dsp32_path = "../dataset/dsp32"
     pos_group = ["normal"]
     neg_group = ["abnormal", "d1", "d2"]
 
@@ -45,7 +45,7 @@ def compare_and_save(dsp32_dir, groups, output_dir):
 
 
 if __name__ == "__main__":
-    dsp32_dir = "dataset/dsp32"
+    dsp32_dir = "../dataset/dsp32"
     groups = ["normal", "abnormal", "d1", "d2", "d3", "d4"]
-    output_dir = "dataset/predict"
+    output_dir = "../dataset/predict"
     compare_and_save(dsp32_dir, groups, output_dir)
