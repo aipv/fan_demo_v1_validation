@@ -9,5 +9,10 @@
         "input" : "dataset/sample",
         "output" : "dataset/dsp32",
         "groups" : ["normal", "abnormal", "d1", "d2", "d3", "d4"]
+    },
+    "train":
+    {
+        "pos_group" : ["normal"],
+        "neg_group" : ["abnormal", "d1", "d2"]
     }
 }
