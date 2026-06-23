@@ -1,8 +1,8 @@
+import os
 import sys
 sys.path.insert(0, 'dataset/model')
 import numpy as np
 from model import predict_batch
-from modules.signal_process import load_dsp32_data
 
 
 def load_group_data(dsp32_dir, group, n_mfcc=49, n_coef=40):
@@ -14,11 +14,13 @@ def load_group_data(dsp32_dir, group, n_mfcc=49, n_coef=40):
     return data.mean(axis=1)
 
 
-def validate_groups(dsp32_dir, groups):
+def validate_groups(dsp32_dir, groups, output_dir):
+    os.makedirs(output_dir, exist_ok=True)
     results = {}
     for group in groups:
         data = load_group_data(dsp32_dir, group)
         probs = predict_batch(data)
+        probs.astype(np.float32).tofile(os.path.join(output_dir, f"{group}.bin"))
         results[group] = {
             'mean': probs.mean(),
             'std': probs.std(),
@@ -31,4 +33,5 @@ def validate_groups(dsp32_dir, groups):
 if __name__ == "__main__":
     dsp32_dir = "dataset/dsp32"
     groups = ["normal", "abnormal", "d1", "d2", "d3", "d4"]
-    validate_groups(dsp32_dir, groups)
+    output_dir = "dataset/predict"
+    validate_groups(dsp32_dir, groups, output_dir)
