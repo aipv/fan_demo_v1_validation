@@ -9,6 +9,7 @@ def load_dsp32_group(dsp32_path, group, n_mfcc=49, n_coef=40):
     dsp32_data = np.fromfile(dsp32_file, dtype=np.float32)
     count = dsp32_data.size // n_mfcc // n_coef
     result = dsp32_data.reshape((count, n_mfcc, n_coef))
+    result = result.mean(axis=1)
     return result
 
 def load_dsp32_groups(dsp32_path, groups):
