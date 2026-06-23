@@ -40,18 +40,18 @@ def export_h_model(model, output_file):
     with open(output_file, "w") as f:
         f.write("#ifndef FAN_MODEL_H\n")
         f.write("#define FAN_MODEL_H\n\n")
-        f.write(
-             f"static const float g_bias = {bias:.9f}f;\n\n"
-        )
-        f.write(
-            "static const float g_weight[40] = {\n"
-        )
-        for i,w in enumerate(coef):
-            if i != len(coef)-1:
-                f.write(f"    {w:.9f}f,\n")
-            else:
-                f.write(f"    {w:.9f}f\n")
+        f.write(f"static const float g_bias = {bias:.9f}f;\n\n")
+        f.write("static const float g_weight[40] = {\n")
+        for row in range(5):
+            start = row * 8
+            end = start + 8
+            values = [f"{coef[i]:.9f}f" for i in range(start, end)]
+            f.write("    " + ", ".join(values) + ",\n")
         f.write("};\n\n")
+        f.write("float predict_score(const float* feature);\n")
+        f.write("float predict_prob(const float* feature);\n")
+        f.write("int predict_class(const float* feature, float threshold);\n")
+        f.write("void predict_batch(const float* features, float* probs, int count);\n\n")
         f.write("#endif\n")
 
 
