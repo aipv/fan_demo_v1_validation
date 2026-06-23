@@ -54,3 +54,30 @@ def export_h_model(model, output_file):
         f.write("};\n\n")
         f.write("#endif\n")
 
+
+def export_c_model(model, output_file):
+    coef = model.coef_[0]
+    bias = model.intercept_[0]
+    with open(output_file, "w") as f:
+        f.write("#include \"model.h\"\n")
+        f.write("#include <math.h>\n\n")
+        f.write("float predict_score(const float* feature) {\n")
+        f.write("    float score = g_bias;\n")
+        f.write("    for (int i = 0; i < 40; i++) {\n")
+        f.write("        score += feature[i] * g_weight[i];\n")
+        f.write("    }\n")
+        f.write("    return score;\n")
+        f.write("}\n\n")
+        f.write("float predict_prob(const float* feature) {\n")
+        f.write("    float score = predict_score(feature);\n")
+        f.write("    return 1.0f / (1.0f + expf(-score));\n")
+        f.write("}\n\n")
+        f.write("int predict_class(const float* feature, float threshold) {\n")
+        f.write("    return predict_prob(feature) >= threshold ? 1 : 0;\n")
+        f.write("}\n\n")
+        f.write("void predict_batch(const float* features, float* probs, int count) {\n")
+        f.write("    for (int i = 0; i < count; i++) {\n")
+        f.write("        probs[i] = predict_prob(&features[i * 40]);\n")
+        f.write("    }\n")
+        f.write("}\n")
+
